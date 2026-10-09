@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>금융정보 챗봇 답변 평가 연구</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{--paper:#F6F7F5;--card:#FFFFFF;--ink:#1B2430;--body:var(--body);--muted:#5B6672;--faint:#8A939C;--line:#DCE1DD;--radio:#B9C1BC;--dot:#A9B3AE;--off:#C9D0CC;
+--pine:#12594C;--on-pine:#FFFFFF;--pine-ink:#0C3F36;--pine-soft:#E4EEEA;--pine-press:#D5E6DF;--danger:#B3261E;--danger-soft:#FBEDEC;--warn-bg:#FFF5DB;--warn-ink:#5C4300;--fade:var(--fade);
+--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#111513;--card:#1A201D;--ink:#E8EDEA;--body:#C9D2CD;--muted:#A3AEA8;--faint:#7F8A84;--line:#2D3632;--radio:#55615B;--dot:#6E7A74;--off:#3A4440;
+--pine:#2E8C76;--on-pine:#FFFFFF;--pine-ink:#BDE5D9;--pine-soft:#1C3530;--pine-press:#244640;--danger:#F2A7A1;--danger-soft:#3A1F1D;--warn-bg:#3A3018;--warn-ink:#F3DE9E;--fade:rgba(17,21,19,0);color-scheme:dark}}
+:root[data-theme="dark"]{--paper:#111513;--card:#1A201D;--ink:#E8EDEA;--body:#C9D2CD;--muted:#A3AEA8;--faint:#7F8A84;--line:#2D3632;--radio:#55615B;--dot:#6E7A74;--off:#3A4440;
+--pine:#2E8C76;--on-pine:#FFFFFF;--pine-ink:#BDE5D9;--pine-soft:#1C3530;--pine-press:#244640;--danger:#F2A7A1;--danger-soft:#3A1F1D;--warn-bg:#3A3018;--warn-ink:#F3DE9E;--fade:rgba(17,21,19,0);color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink)}
+body{background:var(--paper);color:var(--ink);font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;font-size:16px;line-height:1.6;-webkit-text-size-adjust:100%;word-break:keep-all;overflow-wrap:break-word}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:2px solid var(--pine);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding:calc(20px + var(--safe-t)) 20px calc(120px + var(--safe-b))}
+.top{position:sticky;top:0;z-index:5;background:var(--paper);padding:calc(12px + var(--safe-t)) 20px 12px;border-bottom:1px solid var(--line)}
+.top-in{max-width:520px;margin:0 auto}
+.top-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.bar{height:4px;background:var(--line);border-radius:2px;margin-top:8px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--pine);transition:width .3s}
+.top+.wrap{padding-top:24px}
+h1{font-size:26px;line-height:1.35;font-weight:700;letter-spacing:-0.02em;margin:8px 0 16px}
+h2{font-size:21px;line-height:1.4;font-weight:700;letter-spacing:-0.015em;margin:0 0 8px}
+.lead{font-size:15px;color:var(--muted);margin:0 0 8px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;margin:16px 0}
+.box h3{font-size:15px;font-weight:700;margin:0 0 6px}
+.box p,.box li{font-size:15px;color:var(--body);margin:0 0 6px}
+.box ul{padding-left:18px;margin:0}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}
+.fact{background:var(--pine-soft);border-radius:12px;padding:12px 14px}
+.fact b{display:block;font-size:20px;color:var(--pine-ink)}
+.fact span{font-size:13px;color:var(--pine-ink)}
+.q{padding:22px 0;border-bottom:1px solid var(--line)}
+.q:last-of-type{border-bottom:0}
+.q .qt{font-size:17px;line-height:1.6;margin:0 0 14px;font-weight:500}
+.q .qt small{display:block;font-size:13px;color:var(--faint);font-weight:400;margin-bottom:2px}
+.q.err .qt{color:var(--danger)}
+.scale{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.scale button{height:46px;border:1px solid var(--line);background:var(--card);border-radius:10px;font-size:16px;font-weight:600;color:var(--muted);padding:0;transition:background .12s,border-color .12s}
+.scale button[aria-pressed=true]{background:var(--pine);border-color:var(--pine);color:var(--on-pine)}
+.anch{display:flex;justify-content:space-between;font-size:12px;color:var(--faint);margin-top:6px;gap:8px}
+.anch span:nth-child(2){text-align:center}
+.anch span:last-child{text-align:right}
+.opts{display:grid;gap:8px}
+.opts.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.opt{display:flex;align-items:center;gap:10px;text-align:left;min-height:50px;padding:12px 14px;border:1px solid var(--line);background:var(--card);border-radius:12px;font-size:15px;line-height:1.4}
+.opt::before{content:"";flex:none;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--radio);background:var(--card)}
+.opt[aria-pressed=true]{border-color:var(--pine);background:var(--pine-soft);color:var(--pine-ink)}
+.opt[aria-pressed=true]::before{border:5px solid var(--pine)}
+.num{width:100%;height:52px;border:1px solid var(--line);border-radius:12px;padding:0 14px;font:inherit;font-size:18px;background:var(--card)}
+.errmsg{font-size:13px;color:var(--danger);margin-top:8px}
+.foot{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(var(--fade),var(--paper) 30%);padding:24px 20px calc(16px + var(--safe-b));z-index:4}
+.foot-in{max-width:520px;margin:0 auto;display:flex;gap:10px}
+.btn{flex:1;height:54px;border-radius:14px;border:0;background:var(--pine);color:var(--on-pine);font-size:17px;font-weight:700}
+.btn.ghost{flex:0 0 96px;background:var(--card);color:var(--muted);border:1px solid var(--line);font-weight:500}
+.btn.sub{background:var(--card);color:var(--pine);border:1px solid var(--pine)}
+.check{display:flex;gap:12px;align-items:flex-start;padding:14px 0;font-size:15px;border-top:1px solid var(--line)}
+.check input{width:22px;height:22px;accent-color:var(--pine);flex:none;margin-top:1px}
+.banner{background:var(--warn-bg);color:var(--warn-ink);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+/* chat */
+.chat{display:flex;flex-direction:column;height:100%;max-width:560px;margin:0 auto;background:var(--paper)}
+.chead{flex:none;display:flex;align-items:center;gap:10px;padding:calc(10px + var(--safe-t)) 16px 10px;border-bottom:1px solid var(--line);background:var(--card)}
+.ava{width:34px;height:34px;border-radius:50%;background:var(--pine);color:var(--on-pine);display:flex;align-items:center;justify-content:center;flex:none}
+.ava svg{width:18px;height:18px}
+.chead b{font-size:16px;display:block;line-height:1.3}
+.chead span{font-size:12px;color:var(--faint)}
+.chead .cnt{margin-left:auto;font-size:13px;color:var(--pine-ink);background:var(--pine-soft);padding:4px 10px;border-radius:999px;font-weight:600}
+.thread{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 14px 24px;display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:8px;align-items:flex-start}
+.row.me{justify-content:flex-end}
+.row .ava{width:28px;height:28px}
+.row .ava svg{width:15px;height:15px}
+.bub{max-width:86%;padding:11px 13px;font-size:14.5px;line-height:1.65;border-radius:4px 16px 16px 16px;background:var(--card);border:1px solid var(--line)}
+.bub p{margin:0 0 10px}
+.bub p:last-child{margin-bottom:0}
+.me .bub{background:var(--pine);color:var(--on-pine);border-color:var(--pine);border-radius:16px 4px 16px 16px}
+.meta{margin-top:11px;padding-top:9px;border-top:1px solid var(--line);font-size:12.5px;line-height:1.6;color:var(--muted)}
+.meta p{margin:0 0 2px}
+.dots{display:inline-flex;gap:4px;padding:4px 2px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--dot);animation:b 1.1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,60%,100%{opacity:.35;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.rate{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 14px;margin:4px 0 0 36px}
+.rate h4{margin:0 0 2px;font-size:15px}
+.rate .lead{font-size:13px;margin:0}
+.rate .q{padding:16px 0}
+.rate .qt{font-size:15.5px;margin-bottom:10px}
+.rate .scale button{height:42px;font-size:15px}
+.rate .btn{width:100%;height:50px;font-size:16px;margin-top:6px}
+.done-note{font-size:13px;color:var(--pine-ink);background:var(--pine-soft);border-radius:999px;padding:6px 12px;align-self:center}
+.sys{align-self:center;font-size:13px;color:var(--faint);text-align:center;max-width:90%}
+.comp{flex:none;border-top:1px solid var(--line);background:var(--card);padding:10px 12px calc(10px + var(--safe-b))}
+.comp-hint{font-size:12px;color:var(--faint);margin:0 4px 6px}
+.comp-row{display:flex;gap:8px;align-items:center}
+.comp-q{flex:1;min-height:46px;display:flex;align-items:center;padding:10px 14px;border:1px solid var(--line);border-radius:23px;background:var(--paper);font-size:15px;line-height:1.45;color:var(--ink)}
+.comp-q.wait{color:var(--faint)}
+.send{flex:none;width:46px;height:46px;border-radius:50%;border:0;background:var(--pine);color:var(--on-pine);display:flex;align-items:center;justify-content:center}
+.send svg{width:20px;height:20px}
+.send[disabled]{background:var(--off);cursor:default}
+.tag{font-size:11px;color:var(--warn-ink);background:var(--warn-bg);border-radius:6px;padding:2px 6px;margin-left:6px}
+.sug{display:flex;flex-direction:column;gap:8px}
+.sugbtn{display:flex;align-items:center;gap:12px;text-align:left;margin-left:36px;padding:11px 12px 11px 15px;border:1.5px solid var(--pine);background:var(--pine-soft);color:var(--pine-ink);border-radius:16px;font-size:14.5px;font-weight:600;line-height:1.5;animation:rise .35s ease-out both}
+.sugbtn:active{background:var(--pine-press)}
+.sugbtn .q-txt{flex:1}
+.sugbtn .go{flex:none;width:38px;height:38px;border-radius:50%;background:var(--pine);color:var(--on-pine);display:flex;align-items:center;justify-content:center}
+.sugbtn .go svg{width:18px;height:18px}
+.sug .row{animation:rise .3s ease-out both}
+.readbtn{align-self:flex-start;margin-left:36px;display:flex;align-items:center;gap:8px;padding:10px 16px;border:1.5px solid var(--pine);background:var(--card);color:var(--pine);border-radius:999px;font-size:14px;font-weight:600;animation:rise .35s ease-out both}
+.readbtn svg{width:16px;height:16px}
+.readbtn:active{background:var(--pine-soft)}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.cnt.bump{animation:bump .9s ease-out}
+@keyframes bump{0%{background:var(--pine);color:var(--on-pine);transform:scale(1)}30%{transform:scale(1.12)}100%{background:var(--pine-soft);color:var(--pine-ink);transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.dots i{animation:none}.bar>i{transition:none}.readbtn,.sugbtn,.sug .row,.cnt.bump{animation:none}}
+</style>
+</head>
+<body>
+<div id="app" style="height:100%"></div>
+<script>
+/* ========== 설정: 배포 전 여기만 수정 ========== */
+const CONFIG = {
+  SUBMIT_URL: "",                 // Google Apps Script 웹 앱 URL (비워 두면 테스트 모드)
+  STUDY_VERSION: "v1.0",
+  RESEARCHER: "손상민",
+  AFFILIATION: "서강대학교 기술경영전문대학원 기술경영학과",
+  CONTACT_EMAIL: "tkdalsfe2@gmail.com",
+  REWARD: "소정의 모바일 상품권",
+  CHARS_PER_SEC: 60,               // 답변 타이핑 속도(모든 조건 동일)
+  TYPING_DOTS_MS: 1200             // 답변 시작 전 '입력 중' 표시 시간
+};
+/* ============================================== */
+
+const ANSWERS = [{"id": "Q1", "topic": "정기예금 중도해지", "q": "정기예금을 만기 전에 해지하면 이자는 어떻게 되나요?", "short": ["정기예금을 만기 전에 해지하면 약정금리 대신 훨씬 낮은 중도해지이율이 적용되어 이자가 크게 줄어듭니다.", "원금은 그대로 돌려받으며, 중도해지이율은 은행·상품마다 다르고 예치 기간이 짧을수록 낮아집니다."], "summary": "핵심만 말씀드리면, 정기예금을 중도해지하면 약정금리 대신 훨씬 낮은 중도해지이율이 적용되어 받는 이자가 크게 줄어듭니다.", "detail": ["정기예금은 만기까지 돈을 맡기는 조건으로 높은 금리를 주는 상품이라, 만기 전에 해지하면 처음 약정한 금리를 그대로 받을 수 없습니다.", "대신 은행이 정한 중도해지이율이 적용되는데, 보통 예치 기간이 짧을수록 낮고 길수록 약정금리에 가까워집니다.", "예를 들어 1년 만기 상품을 3개월 만에 해지하면, 약정금리의 일부 수준인 이율로 3개월치 이자만 계산되는 경우가 많습니다.", "원금은 그대로 돌려받으므로 손해는 이자에 한정되며, 이자에는 만기 때와 마찬가지로 이자소득세가 붙습니다.", "중도해지이율은 은행과 상품마다 다르므로 가입할 때 받은 상품설명서나 은행 앱의 상품 정보에서 기간별 이율을 확인할 수 있습니다.", "급하게 돈이 필요하다면 해지 대신 예금을 담보로 대출을 받거나, 일부 해지가 가능한 상품인지 먼저 확인해 보는 것도 방법입니다."], "source": "금융감독원 금융소비자 정보포털 파인", "caveat": "실제 적용되는 이율은 은행과 상품에 따라 다를 수 있으니, 가입하신 은행에서 확인하시기 바랍니다."}, {"id": "Q2", "topic": "적금 이자", "q": "적금 이자는 왜 생각보다 적게 나오나요?", "short": ["적금은 매달 넣은 돈마다 은행에 맡긴 기간이 달라, 나중에 넣은 돈일수록 이자가 붙는 기간이 짧습니다.", "그래서 실제 이자는 표시된 금리로 기대한 금액의 절반 정도이고, 여기서 세금도 빠집니다."], "summary": "핵심만 말씀드리면, 적금은 매달 넣은 돈마다 맡긴 기간이 달라 실제 이자가 표시 금리로 기대한 금액의 절반 정도에 그치고, 여기서 이자소득세까지 빠집니다.", "detail": ["적금에 표시된 연 금리는 1년 동안 맡긴 돈에 적용되는 금리인데, 적금은 원금을 한 번에 넣지 않고 매달 나누어 넣습니다.", "첫 달에 넣은 돈은 12개월 동안 이자가 붙지만, 마지막 달에 넣은 돈은 1개월치 이자만 붙습니다.", "예를 들어 연 5% 1년 적금에 매달 10만 원씩 넣으면, 원금 120만 원에 대한 이자는 6만 원이 아니라 약 3만 2,500원입니다.", "여기에 일반 과세 기준으로 이자의 15.4%가 이자소득세로 빠져, 실제로 받는 이자는 약 2만 7,500원이 됩니다.", "그래서 같은 금리라면 목돈을 한 번에 맡기는 정기예금의 이자가 더 많고, 적금은 꾸준히 돈을 모으는 습관을 들이는 데 더 의미가 있습니다.", "적금 상품을 비교할 때는 금리와 함께 우대금리를 받기 위한 조건도 꼼꼼히 확인하는 것이 좋습니다."], "source": "금융감독원 금융소비자 정보포털 파인", "caveat": "실제 이자는 상품의 금리 조건, 납입 방식, 과세 여부에 따라 달라질 수 있으니, 가입하신 은행에서 확인하시기 바랍니다."}, {"id": "Q3", "topic": "신용점수 영향 요인", "q": "신용점수는 어떤 기준으로 정해지나요?", "short": ["신용점수는 빚을 제때 갚았는지가 가장 크게 좌우하고, 현재 빚의 규모와 신용거래 기간, 이용한 대출의 종류도 함께 반영됩니다.", "본인이 점수를 조회하는 것만으로는 점수가 내려가지 않습니다."], "summary": "핵심만 말씀드리면, 신용점수는 빚을 제때 갚았는지가 가장 크게 좌우하고, 현재 빚의 규모와 신용거래 기간, 이용한 대출의 종류도 함께 반영됩니다.", "detail": ["신용점수는 나이스평가정보, 코리아크레딧뷰로 같은 개인신용평가회사가 1점부터 1,000점까지 산정하며, 회사마다 평가 방식이 조금씩 달라 점수에 차이가 날 수 있습니다.", "가장 중요한 요소는 상환 이력으로, 대출 원리금이나 카드 대금을 연체하면 소액이라도 점수가 떨어지고 그 기록이 일정 기간 남습니다.", "부채 수준도 반영되어 대출 잔액이 많거나 카드 한도를 거의 다 쓰는 상태가 이어지면 불리합니다.", "신용거래 기간은 길수록 유리하고, 카드론이나 현금서비스처럼 급하게 쓰는 대출을 자주 이용하면 점수가 낮아질 수 있습니다.", "반대로 통신요금이나 건강보험료를 꾸준히 낸 기록을 신용평가회사에 제출하면 가점을 받을 수 있습니다.", "본인이 신용점수를 조회하는 것은 점수에 영향을 주지 않으므로 수시로 확인해도 됩니다."], "source": "금융감독원 금융소비자 정보포털 파인", "caveat": "평가 기준과 반영 정도는 신용평가회사마다 다를 수 있으니, 정확한 내용은 해당 회사에서 확인하시기 바랍니다."}, {"id": "Q4", "topic": "전세자금대출 조건", "q": "전세자금대출을 받으려면 어떤 조건이 필요한가요?", "short": ["전세자금대출은 보통 무주택 요건과 임대차계약, 보증기관의 보증이 필요하며, 소득과 신용에 따라 한도와 금리가 달라집니다.", "정부 지원 상품은 금리가 낮은 대신 소득과 자산 기준을 추가로 봅니다."], "summary": "핵심만 말씀드리면, 전세자금대출은 보통 무주택 요건과 임대차계약, 보증기관의 보증이 필요하며, 소득과 신용에 따라 한도와 금리가 달라집니다.", "detail": ["먼저 대부분의 상품은 신청자가 무주택 세대주이거나 이에 준하는 요건을 갖출 것을 요구합니다.", "확정일자를 받은 임대차계약서가 있어야 하고, 보통 보증금의 5% 이상을 계약금으로 낸 상태여야 하며, 신청은 대개 잔금일 전 정해진 기간 안에 해야 합니다.", "은행은 주택도시보증공사, 한국주택금융공사, 서울보증보험 같은 보증기관의 보증서를 바탕으로 대출을 내주므로, 보증기관의 심사도 함께 통과해야 합니다.", "대출 한도는 보통 보증금의 일정 비율 이내에서 신청자의 소득과 기존 부채를 고려해 정해집니다.", "버팀목 전세자금대출 같은 정부 지원 상품은 금리가 낮은 대신 부부 합산 소득과 순자산, 보증금 규모에 상한이 있습니다.", "계약 전에는 등기부등본으로 집에 잡힌 선순위 대출이 있는지도 확인해 두는 것이 좋습니다."], "source": "주택도시기금 전세자금대출 안내", "caveat": "대출 조건과 한도는 상품·기관·정부 정책에 따라 수시로 바뀔 수 있으니, 신청 전 해당 은행과 보증기관에서 확인하시기 바랍니다."}, {"id": "Q5", "topic": "대출 중도상환수수료", "q": "대출을 만기 전에 갚으면 수수료가 있나요?", "short": ["대출을 받고 보통 3년 안에 미리 갚으면 갚는 금액에 비례해 중도상환수수료가 붙습니다.", "남은 기간이 짧을수록 수수료가 줄어 3년이 지나면 대체로 면제되며, 일부 상품은 매년 일정 금액까지 수수료 없이 갚을 수 있습니다."], "summary": "핵심만 말씀드리면, 대출을 받고 보통 3년 안에 미리 갚으면 중도상환수수료가 붙으며, 남은 기간이 짧을수록 줄어들어 3년이 지나면 대체로 면제됩니다.", "detail": ["중도상환수수료는 은행이 대출금을 일찍 돌려받으면서 생기는 손실과 대출을 내줄 때 든 비용을 보전하기 위해 받는 돈입니다.", "일반적으로 갚는 금액에 수수료율을 곱하고, 다시 3년 중 남은 기간의 비율을 곱해 계산하므로 시간이 지날수록 금액이 작아집니다.", "예를 들어 같은 금액을 갚더라도 대출 1년 차보다 2년 차에 갚을 때 수수료가 더 적습니다.", "2025년부터는 은행이 실제로 드는 비용 안에서만 수수료를 받도록 제도가 바뀌어, 이전보다 수수료율이 낮아졌습니다.", "상품에 따라 매년 대출금의 일정 비율까지는 수수료 없이 갚을 수 있게 해 주거나, 일부 정책금융 상품은 수수료를 아예 받지 않기도 합니다.", "금리가 더 낮은 대출로 갈아타려 한다면 절약되는 이자와 중도상환수수료를 함께 비교해 보는 것이 좋습니다."], "source": "금융감독원 금융소비자 정보포털 파인", "caveat": "수수료율과 면제 조건은 대출 상품과 계약 시기에 따라 다를 수 있으니, 대출 계약서나 해당 은행에서 확인하시기 바랍니다."}, {"id": "Q6", "topic": "카드 소득공제", "q": "연말정산에는 체크카드와 신용카드 중 뭐가 더 유리한가요?", "short": ["카드 사용액이 총급여의 25%를 넘는 부분부터 소득공제가 되며, 그 초과분은 체크카드가 30%로 신용카드 15%보다 공제율이 두 배 높습니다.", "그래서 25%까지는 신용카드, 그 이후는 체크카드를 쓰는 방법이 흔히 권해집니다."], "summary": "핵심만 말씀드리면, 카드 사용액이 총급여의 25%를 넘는 부분부터 공제되는데, 그 초과분에는 체크카드 공제율이 30%로 신용카드 15%보다 두 배 높습니다.", "detail": ["신용카드 등 소득공제는 1년 동안 쓴 카드 사용액이 총급여의 25%를 넘어야 받을 수 있으며, 25%까지의 사용분은 공제 대상이 아닙니다.", "초과분에 대해 신용카드는 15%, 체크카드와 현금영수증은 30%가 공제되고, 전통시장과 대중교통 이용분은 이보다 높은 공제율이 적용됩니다.", "25%를 채울 때는 공제율이 낮은 신용카드 사용분부터 먼저 계산되므로, 그 구간까지는 혜택이 많은 신용카드를 쓰고 넘어선 뒤에 체크카드를 쓰는 방법이 흔히 권해집니다.", "예를 들어 총급여가 4,000만 원이면 1,000만 원을 넘게 쓴 금액부터 공제가 시작됩니다.", "다만 공제받을 수 있는 금액에는 총급여 수준에 따른 연간 한도가 있어, 일정 금액 이상 쓰면 더 공제받지 못합니다.", "본인의 예상 연봉과 연간 지출 규모를 먼저 가늠해 보면 유리한 사용 비율을 정하기 쉽습니다."], "source": "국세청 연말정산 안내", "caveat": "공제율과 한도는 세법 개정에 따라 달라질 수 있으니, 정확한 내용은 국세청 연말정산 안내에서 확인하시기 바랍니다."}];
+
+const SETS = { // 표 2 역균형화: 질문 인덱스 0~5 → 조건
+  A: ["short","short","long_detail","long_detail","long_summary","long_summary"],
+  B: ["long_detail","long_detail","long_summary","long_summary","short","short"],
+  C: ["long_summary","long_summary","short","short","long_detail","long_detail"]
+};
+
+const AGREE = ["전혀 그렇지 않다","보통이다","매우 그렇다"];
+const PAGES = [
+  {id:"elig", title:"참여 자격 확인", lead:"연구 대상에 해당하는지 확인합니다.", type:"yn", items:[
+    {k:"elig_age", t:"만 20세 이상입니까?"},
+    {k:"elig_ai", t:"최근 3개월 안에 ChatGPT, Gemini 같은 생성형 AI 챗봇을 사용한 적이 있습니까?"},
+    {k:"elig_fin", t:"예금·적금, 대출, 카드, 송금 등 금융 상품이나 서비스를 이용한 경험이 있습니까?"},
+    {k:"elig_finjob", t:"현재 은행·증권·보험·카드 등 금융업에 종사하고 있습니까?"}
+  ]},
+  {id:"nfc", title:"생각하는 방식", lead:"평소 나의 모습과 가장 가까운 정도를 골라 주세요. 정답은 없습니다.", type:"likert", anchors:AGREE, items:[
+    {k:"nfc1", t:"나는 오랜 시간 깊이 생각해야 하는 일을 좋아한다."},
+    {k:"nfc4", t:"나는 깊이 생각할 필요가 없는 쉬운 일을 선호한다.", rev:1},
+    {k:"nfc2", t:"나는 복잡한 문제를 새로운 방식으로 풀어내는 과제가 마음에 든다."},
+    {k:"nfc5", t:"나는 머리를 많이 써야 하는 상황은 되도록 피한다.", rev:1},
+    {k:"nfc3", t:"나는 새로운 방식으로 생각하게 만드는 과제에 흥미를 느낀다."},
+    {k:"nfc6", t:"나는 어떤 일을 깊이 파고들어 생각하는 것을 그다지 좋아하지 않는다.", rev:1}
+  ]},
+  {id:"ail", title:"AI 활용", lead:"ChatGPT 같은 AI 서비스를 써 온 평소 경험을 떠올려 답해 주세요.", type:"likert", anchors:AGREE, items:[
+    {k:"ail1", t:"나는 일상이나 업무에서 AI 서비스를 능숙하게 활용할 수 있다."},
+    {k:"ail2", t:"새로운 AI 서비스의 사용법을 익히는 것은 나에게 대체로 어렵다.", rev:1},
+    {k:"ail3", t:"나는 AI 서비스를 활용해 일의 효율을 높일 수 있다."}
+  ]},
+  {id:"trust", title:"AI에 대한 생각", lead:"AI 전반에 대해 평소 어떻게 생각하는지 골라 주세요.", type:"likert", anchors:AGREE, items:[
+    {k:"trust1", t:"나는 새로운 AI 서비스를 처음 사용할 때도 대체로 믿고 사용하는 편이다."},
+    {k:"trust2", t:"나는 AI를 믿지 못할 이유가 생기기 전까지는 대체로 AI를 신뢰한다."},
+    {k:"trust3", t:"나는 대부분의 AI가 원래 목적한 기능을 효과적으로 수행한다고 생각한다."},
+    {k:"trust4", t:"나는 대부분의 AI가 내가 필요로 하는 기능을 제공한다고 생각한다."}
+  ]},
+  {id:"subjk", title:"금융에 대한 생각", lead:"금융 상품과 서비스에 대해 스스로 어떻게 느끼는지 골라 주세요.", type:"likert", anchors:AGREE, items:[
+    {k:"subjk1", t:"나는 금융 상품과 서비스에 대해 꽤 많이 알고 있다."},
+    {k:"subjk2", t:"나는 대부분의 사람들보다 금융 상품과 서비스에 대해 덜 안다.", rev:1},
+    {k:"subjk3", t:"나는 주변 사람들 사이에서 금융 상품과 서비스를 잘 아는 편에 속한다."}
+  ]},
+  {id:"objk", title:"금융 상식 퀴즈", lead:"검색하지 말고 알고 있는 대로 골라 주세요. 모르면 '잘 모르겠다'를 골라도 됩니다.", type:"mc", items:[
+    {k:"objk1", t:"100만 원을 연 10% 복리로 2년 동안 예금하면, 2년 뒤 받는 돈은 얼마일까요? (세금은 없다고 가정)", o:["110만 원","120만 원","121만 원","130만 원"], a:2},
+    {k:"objk2", t:"연 6% 복리로 투자하면 원금이 두 배가 되기까지 대략 몇 년이 걸릴까요?", o:["약 6년","약 12년","약 17년","약 24년"], a:1},
+    {k:"objk3", t:"예금 금리가 연 2%이고 물가상승률이 연 3%라면, 1년 뒤 이 예금으로 살 수 있는 물건의 양은?", o:["지금보다 많다","지금과 같다","지금보다 적다"], a:2},
+    {k:"objk4", t:"한 금융회사에서 예금자보호제도로 보호받는 1인당 예금 한도(원금과 이자 합계)는 현재 얼마일까요?", o:["3,000만 원","5,000만 원","1억 원","한도 없이 전액"], a:2},
+    {k:"objk5", t:"한 회사 주식에만 투자하는 것과 여러 회사 주식에 나누어 투자하는 펀드 중, 일반적으로 위험이 더 작은 쪽은?", o:["한 회사 주식","여러 회사에 나누어 투자하는 펀드","둘 다 같다"], a:1},
+    {k:"objk6", t:"시장금리가 오르면, 이미 발행된 채권의 가격은 일반적으로 어떻게 될까요?", o:["오른다","내린다","변하지 않는다","금리와 관계없다"], a:1}
+  ]},
+  {id:"demo", title:"응답자 정보", lead:"마지막 사전 질문입니다.", type:"demo", items:[
+    {k:"age", t:"만 나이를 숫자로 입력해 주세요.", kind:"num"},
+    {k:"job", t:"직업 유형", kind:"pick", two:1, o:["사무직","전문직","서비스·판매직","생산·기술직","자영업","공무원·공공기관","학생","전업주부","무직·구직 중","기타"]},
+    {k:"industry", t:"종사하는 산업군", kind:"pick", two:1, o:["IT·통신","제조","유통·서비스","교육","의료·보건","공공·행정","건설·부동산","미디어·콘텐츠","기타 산업","해당 없음 (학생·무직 등)"]},
+    {k:"ai_freq", t:"생성형 AI를 얼마나 자주 사용하나요?", kind:"pick", o:["거의 사용하지 않는다","한 달에 몇 번","일주일에 1~2번","일주일에 3~6번","매일"]}
+  ]}
+];
+const RATE = [
+  {k:"sat1", t:"이 답변에 만족한다.", a:["전혀 그렇지 않다","","매우 그렇다"]},
+  {k:"sat2", t:"이 답변은 내가 기대한 수준을 충족했다.", a:["전혀 그렇지 않다","","매우 그렇다"]},
+  {k:"sat3", t:"전반적으로 이 답변이 마음에 든다.", a:["전혀 그렇지 않다","","매우 그렇다"]},
+  {k:"mc_length", t:"이 답변의 길이는 어떠했습니까?", a:["매우 짧았다","","매우 길었다"]},
+  {k:"mc_find", t:"이 답변에서 핵심 내용을 쉽게 찾을 수 있었다.", a:["전혀 그렇지 않다","","매우 그렇다"]}
+];
+
+/* ---------- 상태 ---------- */
+const LS = "nfc_chatbot_study_" + CONFIG.STUDY_VERSION;
+const params = new URLSearchParams(location.search);
+const DEBUG = params.get("debug") === "1";
+if (params.get("reset") === "1") { try { localStorage.removeItem(LS); localStorage.removeItem(LS+"_backup"); } catch(e){} }
+let S = load() || fresh();
+function fresh(){ return {step:"intro", page:0, pid:makeId(), set:null, order:null, pre:{}, trials:[], t0:null, consentAt:null, chatStartAt:null}; }
+function load(){ try { return JSON.parse(localStorage.getItem(LS)); } catch(e){ return null; } }
+function save(){ try { localStorage.setItem(LS, JSON.stringify(S)); } catch(e){} }
+function makeId(){ const a=new Uint8Array(4); crypto.getRandomValues(a); const d=new Date(); return "P"+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+Array.from(a,x=>x.toString(16).padStart(2,"0")).join("").toUpperCase(); }
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const r=new Uint32Array(1); crypto.getRandomValues(r); const j=r[0]%(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+const now = () => Date.now();
+const $app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const ICON_BANK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10h18L12 4z"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg>';
+const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const ICON_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+
+function go(step){ S.step = step; save(); render(); window.scrollTo(0,0); }
+function render(){
+  const r = {intro, pre, screenout, chatIntro, chat, contact, submit, done}[S.step];
+  (r || intro)();
+}
+
+/* ---------- 1. 연구 설명과 동의 ---------- */
+function intro(){
+  $app.style.height = "auto";
+  $app.innerHTML = `
+  <div class="wrap">
+    ${!CONFIG.SUBMIT_URL ? '<div class="banner">검토용 미리보기입니다. 응답은 저장되지 않습니다.</div>' : ''}
+    <p class="lead">${esc(CONFIG.AFFILIATION)} 연구 참여 안내</p>
+    <h1>금융정보 챗봇의 답변을<br>평가해 주세요</h1>
+    <p style="font-size:16px;color:var(--body);margin:0">금융 질문에 대한 챗봇 답변을 읽고, 답변이 어땠는지 평가하는 연구입니다. 결과는 사용자에게 더 도움이 되는 챗봇 답변을 설계하는 데 활용됩니다.</p>
+    <div class="facts">
+      <div class="fact"><b>약 17분</b><span>소요 시간</span></div>
+      <div class="fact"><b>6번</b><span>챗봇과 대화</span></div>
+    </div>
+    <div class="box">
+      <h3>참여 방법</h3>
+      <ul>
+        <li>먼저 평소 생각과 경험에 관한 짧은 설문(약 6분)에 답합니다.</li>
+        <li>이어서 챗봇 화면에서 준비된 금융 질문 6개를 보내고, 답변을 읽을 때마다 짧게 평가합니다(약 10분).</li>
+        <li>정답이 있는 평가가 아니므로 느낀 그대로 답해 주시면 됩니다.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>참여자 권리와 개인정보</h3>
+      <ul>
+        <li>참여는 자발적이며, 언제든 창을 닫아 그만둘 수 있고 불이익은 없습니다.</li>
+        <li>이름 등 신원을 알 수 있는 정보는 수집하지 않으며, 응답은 무작위 번호로만 관리되고 연구 목적으로만 통계 처리됩니다.</li>
+        <li>응답 시간 등 화면 이용 기록이 함께 저장됩니다.</li>
+        <li>끝까지 참여하시면 ${esc(CONFIG.REWARD)}을 드립니다. 발송용 연락처는 마지막에 선택적으로 받으며, 응답과 분리해 보관하고 발송 후 파기합니다.</li>
+        <li>문의: ${esc(CONFIG.RESEARCHER)} (${esc(CONFIG.CONTACT_EMAIL)})</li>
+      </ul>
+    </div>
+    <label class="check"><input type="checkbox" id="c1"><span>위 내용을 읽고 이해했으며, 연구 참여에 동의합니다.</span></label>
+    <div class="errmsg" id="cerr" hidden>동의에 체크해야 시작할 수 있습니다.</div>
+  </div>
+  <div class="foot"><div class="foot-in"><button class="btn" id="start">동의하고 시작하기</button></div></div>`;
+  const c1 = document.getElementById("c1"), err = document.getElementById("cerr");
+  c1.onchange = () => { err.hidden = true; };
+  document.getElementById("start").onclick = () => {
+    if (!c1.checked){ err.hidden = false; return; }
+    S.consentAt = new Date().toISOString(); S.t0 = now(); S.page = 0;
+    go("pre");
+  };
+}
+
+/* ---------- 2. 사전 설문 ---------- */
+function topBar(label, idx, total){
+  return `<div class="top"><div class="top-in"><div class="top-row"><span>사전 설문 ${idx} / ${total}</span><span>${esc(label)}</span></div><div class="bar"><i style="width:${Math.round(idx/total*100)}%"></i></div></div></div>`;
+}
+function scaleHTML(k, val, anchors){
+  let b = ""; for (let i=1;i<=7;i++) b += `<button type="button" data-k="${k}" data-v="${i}" aria-pressed="${val===i}" aria-label="${i}점">${i}</button>`;
+  return `<div class="scale" role="group">${b}</div><div class="anch"><span>1 ${esc(anchors[0])}</span>${anchors[1]?`<span>${esc(anchors[1])}</span>`:'<span></span>'}<span>${esc(anchors[2])} 7</span></div>`;
+}
+function pre(){
+  $app.style.height = "auto";
+  const P = PAGES[S.page];
+  let body = "";
+  P.items.forEach((it, i) => {
+    const v = S.pre[it.k];
+    let ctl = "";
+    if (P.type === "likert") ctl = scaleHTML(it.k, v, P.anchors);
+    else if (P.type === "yn") ctl = `<div class="opts two">${["예","아니오"].map((o,j)=>`<button type="button" class="opt" data-k="${it.k}" data-v="${j===0?1:0}" aria-pressed="${v===(j===0?1:0)}">${o}</button>`).join("")}</div>`;
+    else if (P.type === "mc") ctl = `<div class="opts">${it.o.concat(["잘 모르겠다"]).map((o,j)=>`<button type="button" class="opt" data-k="${it.k}" data-v="${j===it.o.length?9:j}" aria-pressed="${v===(j===it.o.length?9:j)}">${esc(o)}</button>`).join("")}</div>`;
+    else if (it.kind === "num") ctl = `<input class="num" id="in_${it.k}" type="number" inputmode="numeric" min="20" max="99" placeholder="예: 34" value="${v??""}">`;
+    else ctl = `<div class="opts${it.two?" two":""}">${it.o.map((o,j)=>`<button type="button" class="opt" data-k="${it.k}" data-v="${j+1}" aria-pressed="${v===j+1}">${esc(o)}</button>`).join("")}</div>`;
+    body += `<div class="q" id="q_${it.k}"><p class="qt">${P.type==="mc"?`<small>문제 ${i+1}</small>`:""}${P.type==="likert"?`${i+1}. `:""}${esc(it.t)}</p>${ctl}<div class="errmsg" hidden></div></div>`;
+  });
+  const last = S.page === PAGES.length-1;
+  $app.innerHTML = topBar(P.title, S.page+1, PAGES.length) + `
+  <div class="wrap"><h2>${esc(P.title)}</h2><p class="lead">${esc(P.lead)}</p>${body}</div>
+  <div class="foot"><div class="foot-in">${S.page>0?'<button class="btn ghost" id="prev">이전</button>':''}<button class="btn" id="next">${last?"챗봇으로 이동":"다음"}</button></div></div>`;
+  $app.querySelectorAll("button[data-k]").forEach(b => b.onclick = () => {
+    const k = b.dataset.k, v = +b.dataset.v;
+    S.pre[k] = v; save();
+    b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x===b));
+    const q = document.getElementById("q_"+k); q.classList.remove("err"); q.querySelector(".errmsg").hidden = true;
+  });
+  $app.querySelectorAll("input.num").forEach(inp => inp.oninput = () => {
+    const k = inp.id.slice(3); S.pre[k] = inp.value===""?undefined:+inp.value; save();
+    const q = document.getElementById("q_"+k); q.classList.remove("err"); q.querySelector(".errmsg").hidden = true;
+  });
+  const prev = document.getElementById("prev"); if (prev) prev.onclick = () => { S.page--; go("pre"); };
+  document.getElementById("next").onclick = () => {
+    let first = null;
+    P.items.forEach(it => {
+      const v = S.pre[it.k]; let msg = "";
+      if (v === undefined || v === null || Number.isNaN(v)) msg = it.kind==="num" ? "나이를 입력해 주세요." : "응답을 선택해 주세요.";
+      else if (it.kind === "num" && (v < 20 || v > 99 || !Number.isInteger(v))) msg = "20~99 사이의 숫자로 입력해 주세요.";
+      const q = document.getElementById("q_"+it.k), m = q.querySelector(".errmsg");
+      if (msg){ q.classList.add("err"); m.textContent = msg; m.hidden = false; first = first || q; }
+    });
+    if (first){ first.scrollIntoView({behavior:"smooth", block:"center"}); return; }
+    S.pre["t_page_"+P.id] = now();
+    if (P.id === "elig"){
+      const ok = S.pre.elig_age===1 && S.pre.elig_ai===1 && S.pre.elig_fin===1 && S.pre.elig_finjob===0;
+      if (!ok){ sendScreenout(); return go("screenout"); }
+    }
+    if (last) return go("chatIntro");
+    S.page++; go("pre");
+  };
+}
+function screenout(){
+  $app.style.height = "auto";
+  $app.innerHTML = `<div class="wrap"><h1>참여해 주셔서<br>감사합니다</h1><p style="color:var(--body)">이번 연구는 참여 조건에 해당하는 분을 대상으로 진행되어, 여기서 설문을 마칩니다. 시간을 내어 주셔서 감사합니다.</p></div>`;
+}
+function sendScreenout(){
+  post({type:"screenout", pid:S.pid, version:CONFIG.STUDY_VERSION, at:new Date().toISOString(),
+    elig_age:S.pre.elig_age, elig_ai:S.pre.elig_ai, elig_fin:S.pre.elig_fin, elig_finjob:S.pre.elig_finjob}).catch(()=>{});
+}
+
+/* ---------- 3. 챗봇 안내 ---------- */
+function chatIntro(){
+  $app.style.height = "auto";
+  $app.innerHTML = `
+  <div class="wrap">
+    <p class="lead">사전 설문 완료</p>
+    <h1>이제 챗봇과<br>대화해 볼게요</h1>
+    <div class="box">
+      <h3>이렇게 진행돼요</h3>
+      <ul>
+        <li>화면 아래에 보낼 질문이 준비되어 있습니다. 보내기 버튼을 누르면 챗봇이 답합니다.</li>
+        <li>답변을 끝까지 읽은 뒤 '답변을 다 읽었어요' 버튼을 누르면, 그 답변을 평가하는 5개 문항이 나옵니다.</li>
+        <li>이 과정을 6번 반복합니다. 질문마다 답변이 다르니 각각 따로 평가해 주세요.</li>
+        <li>실제 금융 상담이 아닌 연구용 화면이며, 따로 입력할 개인정보는 없습니다.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><div class="foot-in"><button class="btn" id="go">챗봇 시작하기</button></div></div>`;
+  document.getElementById("go").onclick = async (e) => {
+    e.target.disabled = true; e.target.textContent = "준비 중…";
+    if (!S.set) S.set = await assignSet();
+    if (!S.order) S.order = shuffle([0,1,2,3,4,5]);
+    S.chatStartAt = S.chatStartAt || now();
+    go("chat");
+  };
+}
+async function assignSet(){
+  const forced = (params.get("set")||"").toUpperCase();
+  if (SETS[forced]) return forced;
+  if (CONFIG.SUBMIT_URL){
+    try {
+      const ctl = new AbortController(); const tm = setTimeout(()=>ctl.abort(), 5000);
+      const r = await fetch(CONFIG.SUBMIT_URL + "?action=assign&pid=" + encodeURIComponent(S.pid), {signal:ctl.signal}); clearTimeout(tm);
+      const j = await r.json(); if (SETS[j.set]) return j.set;
+    } catch(e){}
+  }
+  return shuffle(["A","B","C"])[0];
+}
+
+/* ---------- 4. 챗봇형 설문 ---------- */
+let busy = false;
+function chat(){
+  $app.style.height = "100%";
+  const n = S.trials.length;
+  $app.innerHTML = `
+  <div class="chat">
+    <div class="chead"><div class="ava">${ICON_BANK}</div><div><b>금융정보 도우미</b><span>연구용 챗봇</span></div><div class="cnt" id="cnt"></div></div>
+    <div class="thread" id="th" aria-live="polite"></div>
+    <div class="comp"><p class="comp-hint" id="hint"></p><div class="comp-row"><div class="comp-q" id="cq"></div><button class="send" id="send" aria-label="질문 보내기">${ICON_SEND}</button></div></div>
+  </div>`;
+  const th = document.getElementById("th");
+  addBot(th, `<p>안녕하세요, 금융정보 도우미입니다. 준비된 질문을 보내 주시면 답변해 드릴게요.</p>`);
+  if (n > 0) th.insertAdjacentHTML("beforeend", `<div class="done-note">질문 ${n}개 평가 완료</div>`);
+  nextTurn();
+}
+function addBot(th, html){
+  th.insertAdjacentHTML("beforeend", `<div class="row"><div class="ava">${ICON_BANK}</div><div class="bub">${html}</div></div>`);
+  return th.lastElementChild.querySelector(".bub");
+}
+function scrollEnd(){ const th = document.getElementById("th"); if (th) th.scrollTop = th.scrollHeight; }
+function nextTurn(bump){
+  const n = S.trials.length;
+  const cq = document.getElementById("cq"), send = document.getElementById("send"), hint = document.getElementById("hint"), cnt = document.getElementById("cnt");
+  const th = document.getElementById("th");
+  cnt.textContent = `질문 ${Math.min(n+1,6)} / 6`;
+  if (bump){ cnt.classList.remove("bump"); void cnt.offsetWidth; cnt.classList.add("bump"); }
+  if (n >= 6){
+    cq.textContent = "모든 질문을 마쳤어요"; cq.classList.add("wait"); send.disabled = true; hint.textContent = "";
+    th.insertAdjacentHTML("beforeend", `<div class="sys">6개 답변 평가가 모두 끝났습니다.</div><button class="btn" id="fin" style="flex:none;margin:4px 0 0">마무리하기</button>`);
+    document.getElementById("fin").onclick = () => go("contact");
+    scrollEnd(); return;
+  }
+  const qi = S.order[n], A = ANSWERS[qi];
+  const lead = n === 0 ? "첫 번째 질문이에요. 아래 질문을 눌러 보내 주세요." : `다음 질문이에요 (${n+1}/6). 눌러서 보내 주세요.`;
+  th.insertAdjacentHTML("beforeend", `<div class="sug" id="sug"><div class="row"><div class="ava">${ICON_BANK}</div><div class="bub">${lead}</div></div><button type="button" class="sugbtn" id="sugbtn" aria-label="질문 보내기: ${esc(A.q)}"><span class="q-txt">${esc(A.q)}</span><span class="go">${ICON_SEND}</span></button></div>`);
+  cq.textContent = A.q; cq.classList.remove("wait"); send.disabled = false; hint.textContent = "위의 질문을 누르거나 보내기 버튼을 눌러 주세요";
+  const fire = () => { if (!busy) ask(qi); };
+  send.onclick = fire; document.getElementById("sugbtn").onclick = fire;
+  scrollEnd();
+}
+function buildParas(A, cond){
+  if (cond === "short") return [A.short.join(" ")];
+  const d1 = A.detail.slice(0,3).join(" "), d2 = A.detail.slice(3).join(" ");
+  return cond === "long_summary" ? [A.summary, d1, d2] : [d1, d2, A.summary];
+}
+async function ask(qi){
+  busy = true;
+  const sug = document.getElementById("sug"); if (sug) sug.remove();
+  const A = ANSWERS[qi], cond = SETS[S.set][qi], pos = S.trials.length + 1;
+  const th = document.getElementById("th"), cq = document.getElementById("cq"), send = document.getElementById("send");
+  send.disabled = true; cq.textContent = "답변을 읽고 평가하면 다음 질문을 보낼 수 있어요"; cq.classList.add("wait"); document.getElementById("hint").textContent = "";
+  const tr = {qid:A.id, qi, pos, condition:cond, t_send:now()};
+  th.insertAdjacentHTML("beforeend", `<div class="row me"><div class="bub">${esc(A.q)}</div></div>`);
+  const bub = addBot(th, `<span class="dots" aria-label="답변 작성 중"><i></i><i></i><i></i></span>`);
+  scrollEnd();
+  await sleep(DEBUG ? 200 : CONFIG.TYPING_DOTS_MS);
+  bub.innerHTML = "";
+  tr.t_stream_start = now();
+  const cps = DEBUG ? 600 : CONFIG.CHARS_PER_SEC;
+  for (const para of buildParas(A, cond)){
+    const p = document.createElement("p"); bub.appendChild(p);
+    let i = 0;
+    while (i < para.length){
+      const step = Math.max(1, Math.round(cps * 0.05));
+      i = Math.min(para.length, i + step);
+      p.textContent = para.slice(0, i);
+      scrollEnd();
+      await sleep(50);
+    }
+  }
+  bub.insertAdjacentHTML("beforeend", `<div class="meta"><p>출처: ${esc(A.source)}</p><p>※ ${esc(A.caveat)}</p></div>`);
+  if (DEBUG) bub.insertAdjacentHTML("beforeend", `<span class="tag">${S.set} · ${cond}</span>`);
+  tr.t_stream_end = now();
+  th.insertAdjacentHTML("beforeend", `<button type="button" class="readbtn" id="readbtn">${ICON_CHECK}답변을 다 읽었어요 · 평가하기</button>`);
+  scrollEnd();
+  document.getElementById("readbtn").onclick = (e) => {
+    tr.t_read_done = now();
+    e.currentTarget.remove();
+    showRating(th, tr);
+  };
+}
+function showRating(th, tr){
+  const vals = {};
+  let items = "";
+  RATE.forEach((r) => { items += `<div class="q" id="r_${r.k}"><p class="qt">${esc(r.t)}</p>${scaleHTML(r.k, undefined, r.a)}<div class="errmsg" hidden></div></div>`; });
+  th.insertAdjacentHTML("beforeend", `<div class="rate" id="rate"><h4>방금 받은 답변을 평가해 주세요</h4><p class="lead">답변을 다시 보려면 위로 스크롤하면 됩니다.</p>${items}<div class="errmsg" id="rerr" hidden>모든 문항에 응답해 주세요.</div><button class="btn" id="rsub">평가 완료</button></div>`);
+  const card = document.getElementById("rate");
+  card.querySelectorAll("button[data-k]").forEach(b => b.onclick = () => {
+    if (!tr.t_first_rate) tr.t_first_rate = now();
+    vals[b.dataset.k] = +b.dataset.v;
+    b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x===b));
+    const q = document.getElementById("r_"+b.dataset.k); q.classList.remove("err"); q.querySelector(".errmsg").hidden = true;
+    if (RATE.every(r => vals[r.k])) document.getElementById("rerr").hidden = true;
+  });
+  card.querySelector("#rsub").onclick = () => {
+    let first = null;
+    RATE.forEach(r => { if (!vals[r.k]){ const q = document.getElementById("r_"+r.k); q.classList.add("err"); const m=q.querySelector(".errmsg"); m.textContent="응답을 선택해 주세요."; m.hidden=false; first = first || q; } });
+    if (first){ document.getElementById("rerr").hidden = false; first.scrollIntoView({behavior:"smooth", block:"center"}); return; }
+    tr.t_rate_submit = now();
+    Object.assign(tr, vals);
+    S.trials.push(tr); save();
+    card.outerHTML = `<div class="done-note">평가 완료 · 질문 ${tr.pos} / 6</div>`;
+    busy = false;
+    nextTurn(true);
+  };
+  scrollEnd();
+  setTimeout(() => card.scrollIntoView({behavior:"smooth", block:"start"}), 50);
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------- 5. 연락처(선택) ---------- */
+function contact(){
+  $app.style.height = "auto";
+  $app.innerHTML = `
+  <div class="wrap">
+    <p class="lead">거의 다 됐어요</p>
+    <h1>상품권 받을 연락처를<br>남겨 주세요</h1>
+    <p style="color:var(--body)">${esc(CONFIG.REWARD)} 발송에만 사용합니다. 연락처는 설문 응답과 연결되지 않도록 따로 저장되며, 발송 후 파기합니다. 원하지 않으면 남기지 않아도 됩니다.</p>
+    <div class="q" id="q_ct"><p class="qt">휴대전화 번호 또는 이메일</p><input class="num" id="ct" type="text" autocomplete="off" placeholder="010-1234-5678" style="font-size:16px"><div class="errmsg" hidden></div></div>
+    <label class="check"><input type="checkbox" id="cc"><span>상품권 발송을 위해 연락처를 수집·이용하는 데 동의합니다. (발송 후 파기)</span></label>
+  </div>
+  <div class="foot"><div class="foot-in"><button class="btn ghost" id="skip" style="flex:0 0 120px">남기지 않기</button><button class="btn" id="ok">제출하기</button></div></div>`;
+  const ct = document.getElementById("ct"), cc = document.getElementById("cc"), q = document.getElementById("q_ct"), m = q.querySelector(".errmsg");
+  ct.oninput = cc.onchange = () => { q.classList.remove("err"); m.hidden = true; };
+  document.getElementById("skip").onclick = () => { S.contact = null; go("submit"); };
+  document.getElementById("ok").onclick = () => {
+    const v = ct.value.trim();
+    const okFmt = /^01[0-9]-?\d{3,4}-?\d{4}$/.test(v) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    if (!okFmt){ q.classList.add("err"); m.textContent = "휴대전화 번호나 이메일 형식으로 입력해 주세요."; m.hidden = false; return; }
+    if (!cc.checked){ q.classList.add("err"); m.textContent = "연락처 수집·이용 동의에 체크해 주세요."; m.hidden = false; return; }
+    S.contact = v; go("submit");
+  };
+}
+
+/* ---------- 6. 제출 ---------- */
+function mean(a){ return Math.round(a.reduce((x,y)=>x+y,0)/a.length*1000)/1000; }
+function scoreScale(id){
+  const P = PAGES.find(p => p.id === id);
+  return mean(P.items.map(it => it.rev ? 8 - S.pre[it.k] : S.pre[it.k]));
+}
+function buildPayload(){
+  const objkItems = PAGES.find(p => p.id === "objk").items;
+  const objk = {}; let objkScore = 0;
+  objkItems.forEach(it => { const c = S.pre[it.k] === it.a ? 1 : 0; objk[it.k] = S.pre[it.k]; objk[it.k+"_c"] = c; objkScore += c; });
+  const pre = {};
+  PAGES.filter(p => p.id !== "objk").forEach(p => p.items.forEach(it => pre[it.k] = S.pre[it.k]));
+  const demo = PAGES.find(p => p.id === "demo").items;
+  const label = k => { const it = demo.find(d => d.k === k); return it.o ? it.o[S.pre[k]-1] : S.pre[k]; };
+  const finished = now();
+  return {
+    type:"complete", version:CONFIG.STUDY_VERSION, pid:S.pid, set:S.set,
+    order:S.order.map(i => ANSWERS[i].id).join(" "),
+    consent_at:S.consentAt, finished_at:new Date(finished).toISOString(),
+    total_sec:Math.round((finished - S.t0)/1000), pre_sec:Math.round((S.chatStartAt - S.t0)/1000), chat_sec:Math.round((finished - S.chatStartAt)/1000),
+    theme: (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light",
+    device: (window.innerWidth||0)+"x"+(window.innerHeight||0) + " " + (/Mobi|Android|iPhone/i.test(navigator.userAgent) ? "mobile" : "desktop"),
+    ...pre, ...objk,
+    job_label:label("job"), industry_label:label("industry"),
+    nfc:scoreScale("nfc"), ail:scoreScale("ail"), trust:scoreScale("trust"), subjk:scoreScale("subjk"), objk:objkScore,
+    trials: S.trials.map(t => ({
+      qid:t.qid, pos:t.pos, condition:t.condition,
+      length: t.condition === "short" ? 0 : 1, structure: t.condition === "long_summary" ? 1 : 0,
+      sat1:t.sat1, sat2:t.sat2, sat3:t.sat3, sat:mean([t.sat1,t.sat2,t.sat3]), mc_length:t.mc_length, mc_find:t.mc_find,
+      stream_ms:t.t_stream_end - t.t_stream_start,
+      read_ms:(t.t_read_done||t.t_first_rate||t.t_rate_submit) - t.t_stream_end,
+      rate_ms:t.t_rate_submit - (t.t_read_done||t.t_first_rate||t.t_rate_submit),
+      turn_ms:t.t_rate_submit - t.t_send
+    }))
+  };
+}
+async function post(obj){
+  if (!CONFIG.SUBMIT_URL) throw new Error("no_url");
+  const body = JSON.stringify(obj);
+  try {
+    const r = await fetch(CONFIG.SUBMIT_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body});
+    const j = await r.json(); if (!j.ok) throw new Error(j.error || "server");
+    return j;
+  } catch(e){
+    if (e instanceof TypeError){ await fetch(CONFIG.SUBMIT_URL, {method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body}); return {ok:true, opaque:true}; }
+    throw e;
+  }
+}
+async function submit(){
+  $app.style.height = "auto";
+  $app.innerHTML = `<div class="wrap"><h1>응답을 보내는 중</h1><p class="lead">잠시만 기다려 주세요. 창을 닫지 마세요.</p></div>`;
+  const payload = S.payload || buildPayload(); S.payload = payload; save();
+  try { localStorage.setItem(LS+"_backup", JSON.stringify(payload)); } catch(e){}
+  if (!CONFIG.SUBMIT_URL){ S.submitted = "test"; return go("done"); }
+  try {
+    await post(payload);
+    if (S.contact) await post({type:"contact", version:CONFIG.STUDY_VERSION, contact:S.contact, at:new Date().toISOString()}).catch(()=>{});
+    S.contact = null; S.submitted = true; go("done");
+  } catch(e){
+    $app.innerHTML = `<div class="wrap"><h1>전송하지 못했어요</h1><p style="color:var(--body)">네트워크 연결을 확인한 뒤 다시 시도해 주세요. 응답은 이 기기에 보관되어 있어 처음부터 다시 할 필요가 없습니다.</p>
+    <p class="lead">계속 실패하면 아래 버튼으로 응답 내용을 복사해 ${esc(CONFIG.CONTACT_EMAIL)}로 보내 주세요.</p></div>
+    <div class="foot"><div class="foot-in"><button class="btn sub" id="cp" style="flex:0 0 130px">응답 복사</button><button class="btn" id="re">다시 보내기</button></div></div>`;
+    document.getElementById("re").onclick = () => submit();
+    document.getElementById("cp").onclick = async (ev) => { try { await navigator.clipboard.writeText(JSON.stringify(payload)); ev.target.textContent = "복사됨"; } catch(_){ ev.target.textContent = "복사 실패"; } };
+  }
+}
+function done(){
+  $app.style.height = "auto";
+  const test = S.submitted === "test";
+  $app.innerHTML = `<div class="wrap"><h1>참여해 주셔서<br>감사합니다</h1><p style="color:var(--body)">${test ? "검토용 미리보기가 끝났습니다. 실제 설문에서는 이 시점에 응답이 저장됩니다." : "응답이 모두 저장되었습니다. 이제 창을 닫으셔도 됩니다."}</p>
+  ${test ? `${DEBUG ? `<div class="box"><h3>테스트 모드 응답 데이터</h3><pre style="white-space:pre-wrap;font-size:12px;line-height:1.5;margin:0;max-height:420px;overflow:auto">${esc(JSON.stringify(S.payload,null,1))}</pre></div>` : ""}<button class="btn sub" id="again" style="width:100%">처음부터 다시 해 보기</button>` : ""}</div>`;
+  const ag = document.getElementById("again");
+  if (ag) ag.onclick = () => { try { localStorage.removeItem(LS); localStorage.removeItem(LS+"_backup"); } catch(e){} S = fresh(); save(); render(); window.scrollTo(0,0); };
+}
+render();
+</script>
+</body>
+</html>
